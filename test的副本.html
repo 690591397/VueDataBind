@@ -154,8 +154,9 @@
         Object.defineProperty(this, key, {
             configurable: true,
             enumerable: true,
-            get: () => this._data[key],
+            get: () => {console.log(' 1======= ',this._data[key]); this._data[key]},
             set: (val) => {
+                console.log(' 2======= ',this._data[key], val)
                 this._data[key] = val
             } 
         })
@@ -172,6 +173,7 @@
   t.$watch('name', () => console.log('cb:the one'))
   t.$watch('name', () => console.log('cb:the second'))
   t.name = 'ghjk'
+
 </script>
 </body>
 </html>
