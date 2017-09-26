@@ -1,9 +1,20 @@
-Vue源码的英文解释很完善。以下代码，仅仅用于原理的说明。   
+单向绑定非常简单，就是把Model绑定到View，当我们用JavaScript代码更新Model时，View就会自动更新。
+有单向绑定，就有双向绑定。如果用户更新了View，Model的数据也自动被更新了，这种情况就是双向绑定。
+这么个能让人从dom操作解放出来浑身通泰的东西，能不研究一下它的原理？
+****
+Vue源码的英文解释很详细。以下代码，仅仅用于原理的说明。   
+
 **阅读顺序建议粗略过代码，对照着思路再看代码。**
 ## 两个核心
+
 在研究之前，得先明白了Vue实现数据绑定的两个核心理念，即：
-- ES5的Object.defineProperty()
+- [Object.defineProperty()](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) 
+监听数据的变动
 - 观察者(发布-订阅者)模式
+数据对应的逻辑操作
+**它们的关系又是如何？**
+一句话描述，一个页面在多处订阅使用了同一个数据，用defineProperty监听其改变，并由发布者通知  订阅者去更新它所持有的数据。
+
 ### 关键字get/set 
 使用 [Object.defineProperty()](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) 的 `get／set` 对传入new Vue({})所有数据对象做一个**数据监听，用于在属性获取(get)和设置(set)时，添加对应的逻辑。**    
 ```
@@ -132,9 +143,10 @@ Vue源码的英文解释很完善。以下代码，仅仅用于原理的说明�
 ```
 ****
 
-### 思路
-在整理完这些核心点之后该，我们来整理一下实现如何整合的思路。    
-谁是订阅者？怎么往订阅器添加订阅者？   
+### 如何整合
+在整理完这些核心点之后该，我们拥有了零件。接下来该如何组装起来呢？
+既然用的是*观察者模式*
+谁是发布者？怎么添加订阅？   
 首先，我们监听的每一个数据都应该是一个发布者，这样就可以在数据发生改变的时候通知到各个订阅者。那么，就可以在初始化该数据监听的时候(defineReactive)，在函数里面`var dep = new Dep()`。
 ```
 defineReactive = function(obj, key, val){
@@ -148,7 +160,7 @@ defineReactive = function(obj, key, val){
 /*  */  
 在这一处有一个比较绕的一个点，就是订阅者的创建。   
 订阅者的创建应该伴随的是在页面的某个地方需要用到这个数据，可以说是出现一个 `{{}}`，这时就有一个watcher。    
-这时候回过头来看watcher类，在`new Watcher(this, expOrFn, cb)`时，为了初始化订阅者的值，调用了get（)`this.val = this.get() // 获取订阅的值作为自身的值`，而且在watcher的参数里面，可以知道需要获取的是哪一个发布者的值
+这时候回过头来看watcher类，在`new Watcher(this, expOrFn, cb)`时，为了初始化订阅者的值，调用了get（）`this.val = this.get() // 获取订阅的值作为自身的值`，而且在watcher的参数里面，可以知道需要获取的是哪一个发布者的值
 ```
     const exp = this.expOrFn//获取键名，定位到是哪一个发布者
     var val = this.vm._data[exp] //获取发布者的值
